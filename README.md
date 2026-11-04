@@ -20,6 +20,10 @@ npm start                # http://localhost:4200  (proxy /api -> http://localhos
 
 El front solo oculta pantallas; el BFF valida token y rol en cada llamada.
 
+## Autenticación
+`AuthService` usa MSAL (`loginRedirect`, `acquireTokenSilent`). Un interceptor funcional (`core/auth.interceptor.ts`) agrega
+`Authorization: Bearer <token>` a las llamadas a `/api` (o a `API_BASE_URL/api`). Los roles se leen del claim `roles` del access token.
+
 ## Docker
 `docker build --build-arg ENTRA_TENANT_ID=... --build-arg ENTRA_SPA_CLIENT_ID=... --build-arg ENTRA_API_CLIENT_ID=... --build-arg API_BASE_URL=https://<api-gw> -t frontend-vidasalud .`
 
