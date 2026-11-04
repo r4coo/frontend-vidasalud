@@ -19,8 +19,14 @@ import { Cupo, Prestacion } from '../core/models';
           <option [ngValue]="0" disabled>Selecciona…</option>
           @for (p of prestaciones(); track p.id) { <option [ngValue]="p.id">{{ p.nombre }} · {{ p.duracionMin }} min</option> }
         </select></div>
-      <div class="field"><label for="f">Fecha</label>
-        <input id="f" type="date" [min]="hoy" [ngModel]="fecha()" (ngModelChange)="fecha.set($event); buscar()"></div>
+      <div class="field"><label>Fecha</label>
+        <div class="days">
+          @for (d of dias; track d.iso) {
+            <button type="button" class="day" [class.sel]="fecha() === d.iso" (click)="elegirFecha(d.iso)">
+              <small>{{ d.dow }}</small><b>{{ d.num }}</b><small>{{ d.mes }}</small>
+            </button>
+          }
+        </div></div>
     </section>
     <section class="card">
       <h2 style="margin-bottom:14px">2. Horario</h2>
@@ -42,7 +48,11 @@ import { Cupo, Prestacion } from '../core/models';
     <button class="btn primary" [disabled]="!hora() || enviando()" (click)="confirmar()">{{ enviando() ? 'Enviando…' : 'Solicitar cita' }}</button>
     <span class="muted small">La cita queda SOLICITADA hasta que recepción la confirme.</span>
   </div>`,
-  styles: [`.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  styles: [`.days{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+  .day{display:flex;flex-direction:column;align-items:center;padding:8px 2px;border:1px solid var(--input);background:#fff;border-radius:10px;line-height:1.2}
+  .day b{font-size:16px}.day small{font-size:10px;color:var(--muted-fg);text-transform:capitalize}
+  .day.sel{background:var(--primary);color:#fff;border-color:var(--primary)}.day.sel small{color:#dbe7ff}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .slot{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border:1px solid var(--input);background:#fff;border-radius:10px;font-weight:600}
   .slot small{font-weight:400;font-size:10px;color:var(--muted-fg)}
   .slot.sel{background:var(--primary);color:#fff;border-color:var(--primary)}.slot.sel small{color:#dbe7ff}
@@ -51,7 +61,16 @@ import { Cupo, Prestacion } from '../core/models';
 export class AgendarComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  protected readonly hoy = new Date().toISOString().slice(0, 10);
+  /** Próximos 14 días de atención (sin domingos), con fecha en hora local. */
+  protected readonly dias = Array.from({ length: 21 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d; })
+    .filter((d) => d.getDay() !== 0)
+    .slice(0, 14)
+    .map((d) => ({
+      iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      dow: d.toLocaleDateString('es-CL', { weekday: 'short' }),
+      num: d.getDate(),
+      mes: d.toLocaleDateString('es-CL', { month: 'short' }),
+    }));
   protected readonly prestaciones = signal<Prestacion[]>([]);
   protected readonly cupos = signal<Cupo[]>([]);
   protected readonly prestacionId = signal(0);
@@ -67,6 +86,8 @@ export class AgendarComponent implements OnInit {
       error: (e) => this.error.set(mensajeError(e)),
     });
   }
+
+  elegirFecha(iso: string) { this.fecha.set(iso); this.buscar(); }
 
   buscar() {
     this.hora.set(''); this.cupos.set([]);
