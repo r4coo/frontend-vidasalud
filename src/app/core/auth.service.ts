@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
+import { InteractionRequiredAuthError } from '@azure/msal-browser';
 import { environment } from '../../environments/environment';
 import { ROLES, Role, Session } from './models';
 
@@ -64,6 +65,22 @@ export class AuthService {
       return;
     }
     this.session.set({ name: account.name ?? account.username, email: account.username, roles });
+  }
+
+  /** Access token vigente para la API (renueva en silencio; si hace falta, vuelve a Microsoft). */
+  async accessToken(): Promise<string> {
+    const instance = this.msal!.instance;
+    const account = instance.getActiveAccount() ?? instance.getAllAccounts()[0];
+    if (!account) throw new Error('No hay sesión iniciada');
+    try {
+      const r = await instance.acquireTokenSilent({ scopes: apiScopes(), account });
+      return r.accessToken;
+    } catch (e) {
+      if (e instanceof InteractionRequiredAuthError) {
+        await instance.acquireTokenRedirect({ scopes: apiScopes(), account });
+      }
+      throw e;
+    }
   }
 
   hasRole(...roles: Role[]): boolean {
