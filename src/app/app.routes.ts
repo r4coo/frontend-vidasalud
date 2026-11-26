@@ -17,6 +17,8 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/catalogo.component').then((m) => m.CatalogoComponent) },
       { path: 'consulta', loadComponent: () => import('./pages/consulta.component').then((m) => m.ConsultaComponent) },
       { path: 'historial', loadComponent: () => import('./pages/historial.component').then((m) => m.HistorialComponent) },
+      { path: 'metricas', canActivate: [roleGuard], data: { roles: ['Recepcionista', 'Admin'] },
+        loadComponent: () => import('./pages/metricas.component').then((m) => m.MetricasComponent) },
       { path: 'admin', canActivate: [roleGuard], data: { roles: ['Admin'] },
         loadComponent: () => import('./pages/admin.component').then((m) => m.AdminComponent) },
     ],

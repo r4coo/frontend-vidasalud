@@ -1,4 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { timer } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ApiService, mensajeError } from '../core/api.service';
 import { Atencion, EstadoAtencion, TRANSICIONES } from '../core/models';
@@ -35,11 +37,12 @@ const ETIQUETA: Partial<Record<EstadoAtencion, string>> = {
       </tbody>
     </table>
   </div>
-  <p class="small muted" style="margin-top:10px">Confirmar es asíncrono: se envía un comando a RabbitMQ, el catálogo descuenta el cupo y el estado se actualiza cuando llega el evento (pulsa «Actualizar»).</p>`,
+  <p class="small muted" style="margin-top:10px">Confirmar es asíncrono: se envía un comando a RabbitMQ, el catálogo descuenta el cupo y el estado se actualiza cuando llega el evento. La lista se refresca sola cada 5 segundos.</p>`,
 })
 export class AtencionesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly items = signal<Atencion[]>([]);
   protected readonly error = signal('');
   protected readonly info = signal('');
@@ -54,7 +57,13 @@ export class AtencionesComponent implements OnInit {
     return this.staff() ? posibles : posibles.filter((e) => e === 'CANCELADA');
   }
 
-  ngOnInit() { this.cargar(); }
+  ngOnInit() {
+    this.cargar();
+    // Refresco automático: la interfaz refleja los cambios de estado sin intervención manual.
+    timer(5000, 5000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (!document.hidden && !this.ocupado()) this.cargar();
+    });
+  }
 
   cargar() {
     this.api.atenciones().subscribe({

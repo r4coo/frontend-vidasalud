@@ -34,3 +34,15 @@ export interface ExchangeRequest { name: string; type: 'direct' | 'topic' | 'fan
 export interface BindingRequest { exchange: string; destination: string; destinationType: 'queue' | 'exchange'; routingKey: string }
 
 export interface Session { name: string; email: string; roles: Role[] }
+
+/** Métricas en tiempo real que construyen los consumidores Kafka (GET /api/analytics/resumen). */
+export interface AnalyticsResumen {
+  eventosAtenciones: number;
+  eventosCupos: number;
+  duplicadosDescartados: number;
+  porTipo: Record<string, number>;
+  porPrestacion: Record<string, number>;
+  cuposDisponibles: Record<string, number>;
+  alertasRecientes: string[];
+  ultimaActividad: string | null;
+}

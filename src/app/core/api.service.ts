@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { demoAtenciones, demoCupos, DEMO_BOXES, DEMO_PRESTACIONES } from './demo-data';
 import {
-  Atencion, AtencionRequest, BindingRequest, Box, Cupo, EstadoAtencion, ExchangeRequest, Prestacion, QueueRequest, TRANSICIONES,
+  AnalyticsResumen, Atencion, AtencionRequest, BindingRequest, Box, Cupo, EstadoAtencion, ExchangeRequest, Prestacion, QueueRequest, TRANSICIONES,
 } from './models';
 
 /** Convierte errores HTTP del BFF en un mensaje legible. */
@@ -125,6 +125,15 @@ export class ApiService {
   eliminarCola(n: string) { return this.admin(() => this.http.delete<unknown>(this.url(`/api/admin/rabbit/queues/${encodeURIComponent(n)}`)), { eliminada: n }); }
   crearExchange(r: ExchangeRequest) { return this.admin(() => this.http.post<unknown>(this.url('/api/admin/rabbit/exchanges'), r), { creado: r.name }); }
   crearBinding(r: BindingRequest) { return this.admin(() => this.http.post<unknown>(this.url('/api/admin/rabbit/bindings'), r), { binding: r }); }
+
+  // ---------- Métricas en tiempo real (Kafka) ----------
+  analitica(): Observable<AnalyticsResumen> {
+    if (this.demo) {
+      return this.sim({ eventosAtenciones: 0, eventosCupos: 0, duplicadosDescartados: 0, porTipo: {}, porPrestacion: {},
+        cuposDisponibles: {}, alertasRecientes: [], ultimaActividad: null });
+    }
+    return this.http.get<AnalyticsResumen>(this.url('/api/analytics/resumen'));
+  }
 
   /** Sondeo de salud del BFF (público). */
   health(): Observable<boolean> {

@@ -14,6 +14,7 @@ const NAV: NavItem[] = [
   { path: '/consulta', label: 'Consulta', icon: 'video', roles: ALL },
   { path: '/historial', label: 'Historial', icon: 'file', roles: ALL },
   { path: '/catalogo', label: 'Catálogo', icon: 'box', roles: ['Recepcionista', 'Admin'] },
+  { path: '/metricas', label: 'Kafka en vivo', icon: 'server', roles: ['Recepcionista', 'Admin'] },
   { path: '/admin', label: 'RabbitMQ', icon: 'server', roles: ['Admin'] },
 ];
 
